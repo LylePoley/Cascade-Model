@@ -88,4 +88,4 @@ axs[0].annotate('(a)', xy=(0.05, 0.05), xycoords='axes fraction', zorder = 10, m
 axs[1].annotate('(b)', xy=(0.05, 0.05), xycoords='axes fraction', zorder = 10, ma = 'center', bbox=dict(facecolor='white', alpha=0.6, boxstyle='round'))
 axs[2].annotate('(c)', xy=(0.05, 0.05), xycoords='axes fraction', zorder = 10, ma = 'center', bbox=dict(facecolor='white', alpha=0.6, boxstyle='round'))
 fig.tight_layout()
-# plt.savefig("Interaction Matrix Cartoon.pdf")
+plt.savefig("Interaction Matrix Cartoon.pdf")

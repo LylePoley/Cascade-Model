@@ -6,7 +6,7 @@ import numpy as np
 import General_Solutions as gs
 
 
-dir = gs.dir + "/Fig. 2, phase plots rho-nu plane/"
+dir = gs.dir + "/Fig. 6, phase plots rho-nu plane/"
 
 f = 2
 fig, axs = plt.subplots(1, 3, figsize=(18*f, 5.5*f))
@@ -181,5 +181,5 @@ axs[2].text(0.08, 0.06, '(c)', horizontalalignment='center', verticalalignment='
 
 fig.tight_layout()
 
-# plt.savefig("Fig. 2: rho-nu plane phase plots.pdf")
+# plt.savefig("Fig. 6: rho-nu plane phase plots.pdf")
 

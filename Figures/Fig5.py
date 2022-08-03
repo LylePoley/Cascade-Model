@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import General_Solutions as gs
 
-dir = gs.dir + "/Fig. 3, phase plots sig-gamma and mu-gamma planes/"
+dir = gs.dir + "/Fig. 5, phase plots sig-gamma and mu-gamma planes/"
 
 f = 1
 fig, axs = plt.subplots(1, 2, figsize=(12*f, 5*f))
@@ -134,4 +134,4 @@ axs[1].annotate('Diverging Abundances', xy=(0.2, 0.92), xycoords='axes fraction'
 axs[0].annotate('(a)', xy=(0.05, 0.05), xycoords='axes fraction')
 axs[1].annotate('(b)', xy=(0.05, 0.05), xycoords='axes fraction')
 
-# plt.savefig("Fig. 3: PP interaction phase plots.pdf")
+# plt.savefig("Fig. 5: PP interaction phase plots.pdf")

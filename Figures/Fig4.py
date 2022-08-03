@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import scipy.optimize as opt
 import scipy.integrate as integrate
 
-dir = gs.dir + "/Fig. 5, survival distributions/"
+dir = gs.dir + "/Fig. 4, survival distributions/"
 
 # Plot settings
 f = 1
@@ -87,4 +87,4 @@ axs.set_yticks([0, 0.5, 1])
 axs.grid(True)
 axs.set_xlim(0, 1)
 
-# plt.savefig("Fig. 5: Survival Probabilities.pdf")
+# plt.savefig("Fig. 4: Survival Probabilities.pdf")

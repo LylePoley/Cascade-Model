@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 import scipy.optimize as opt
 
-dir = gs.dir + "/Fig. 4, Abundance distributions/"
+dir = gs.dir + "/Fig. 3, Abundance distributions/"
 
 
 # Plot settings
@@ -143,4 +143,4 @@ axs[0].annotate('(a)', xy=(0.05, 0.05), xycoords='axes fraction', zorder = 10, m
 axs[1].annotate('(b)', xy=(0.05, 0.05), xycoords='axes fraction')
 axs[2].annotate('(c)', xy=(0.05, 0.05), xycoords='axes fraction')
 
-# plt.savefig("Fig. 4: Abundance Distribution2.pdf")
+# plt.savefig("Fig. 3: Abundance Distribution2.pdf")

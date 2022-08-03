@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import General_Solutions as gs
 
 # set this to whatever folder the Fig.1 data is in
-dir = gs.dir + "/Fig. 1, M and phi against nu data/"
+dir = gs.dir + "/Fig. 2, M and phi against nu data/"
 
 lwidth = 8
 msize = 800
@@ -159,4 +159,4 @@ axs[1].set_xlabel(r'$\nu$')
 axs[0].text(0.05, 0.08, '(a)', horizontalalignment='center', verticalalignment='center', transform = axs[0].transAxes)
 axs[1].text(0.05, 0.08, '(b)', horizontalalignment='center', verticalalignment='center', transform = axs[1].transAxes)
 fig.tight_layout()
-plt.savefig("Fig. 1: theory working demonstration.pdf")
+# plt.savefig("Fig. 2: theory working demonstration.pdf")
