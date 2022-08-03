@@ -1,19 +1,22 @@
+'''
+    Fig 4.
+'''
+
 import General_Solutions as gs
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.integrate as integrate
 import scipy.optimize as opt
+import scipy.integrate as integrate
 
-dir = "/home_th/poley/Cascade_model_code_final/PythonFinal/Fig. 4, Abundance distributions/"
-
+dir = gs.dir + "/Fig. 5, survival distributions/"
 
 # Plot settings
-f = 2
-fig, axs = plt.subplots(1, 3, figsize=(20*f, 5*f))
+f = 1
+fig, axs = plt.subplots(1, 1, figsize=(6*f, 5*f))
 
 plt.rc('text', usetex=True)
-plt.rcParams.update({'font.size': 40})
-N = 8
+plt.rcParams.update({'font.size': 16})
+N = 5
 
 plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.viridis(np.linspace(0,1,N)))
 
@@ -27,115 +30,61 @@ color7 = next(plt.gca()._get_lines.prop_cycler)['color']
 color8 = next(plt.gca()._get_lines.prop_cycler)['color']
 
 # general marker and other settings
-lwidth = 7
-msize = 600
+lwidth = 3.5
+msize = 80
 malpha = 0.8
 salpha = 0.7
 
-mu = 0.5
-nu = 1.5
-sigma = 0.15
-rho = 1/1.5
-gamma = -0.3
+# start point
+u, d0, d1 = [1.05134272, 3.32516367, 3.39267796]
 
-# the corresponding values of u, d0, d1 for the parameter choice above
-# to see how to calculate this, see Examples.ipynb
-u, d0, d1 = [ 1.00623867,  0.4621497,  24.10574192]
+# mu = -1.0
+nu = 0.0
+sigma = 0.3
+rho = 0.99
+gamma = -0.6
+alpha = np.linspace(0, 1, 50)
 
-# data for the abundance distributions (for panels (a) and (b))
-data_nu_withHierarchy = np.genfromtxt(dir + "AD_two_peaks.csv", skip_header = 7, names = None, delimiter = ',')
-dataView_nu_withHierarchy = data_nu_withHierarchy.view(dtype = np.float64).reshape((-1, 500 + 9))
+sigma2 = 0.75
+nu2 = 3.0
+rho2 = 3.0
 
-data_nu_withoutHierarchy = np.genfromtxt(dir + "AD_two_peaks_OB.csv", skip_header = 7, names = None, delimiter = ',')
-dataView_nu_withoutHierarchy = data_nu_withoutHierarchy.view(dtype = np.float64).reshape((-1, 500 + 9))
+rho3 = 1/3.0
 
-'''
-    Panel (a)
-'''
+data = np.genfromtxt(dir + "SurvivalDistributions.csv", skip_header = 1)
 
-m_withHierarchy = np.linspace(-5, 5, 500)
-AD_withHierarchy = np.genfromtxt(dir + "AD_withHierarchy.csv")
-axs[0].plot(m_withHierarchy, AD_withHierarchy, linewidth = lwidth, color = color1, zorder = 7)
+u = data[:, 0]
+d0 = data[:, 1]
+d1 = data[:, 2]
 
-
-m_withoutHierarchy = np.linspace(0, 4, 100)
-AD_withoutHierarchy = np.genfromtxt(dir + "AD_withoutHierarchy.csv")
-axs[0].plot(m_withoutHierarchy, AD_withoutHierarchy, linewidth = lwidth, color = color4, zorder = 5)
-
-axs[0].hist(dataView_nu_withHierarchy[:, 8:].flatten(), bins = 50, density = True, alpha = malpha, color = color2, zorder = 6)
-axs[0].hist(dataView_nu_withoutHierarchy[:, 8:].flatten(), bins = 50, density = True, alpha = malpha, color = color5, zorder = 4)
+d_ob = gs.vDelta(alpha, nu, sigma2, rho, u[0], d0[0], d1[0])
+d_rho = gs.vDelta(alpha, nu, sigma2, rho3, u[1], d0[1], d1[1])
+d_nu = gs.vDelta(alpha, nu2, sigma2, rho, u[2], d0[2], d1[2])
+d_both1 = gs.vDelta(alpha, nu2, sigma2, rho3, u[3], d0[3], d1[3])
+d_both2 = gs.vDelta(alpha, nu2, sigma2, rho2, u[4], d0[4], d1[4])
 
 
-'''
-    Panel (b)
-'''
+axs.plot(alpha, gs.w0(d_ob), linewidth=lwidth, color = color1, zorder = 5)
+axs.plot(alpha, gs.w0(d_rho), linewidth=lwidth, color = color2, zorder = 4)
+axs.plot(alpha, gs.w0(d_nu), linewidth=lwidth, color = color3, zorder = 4)
+axs.plot(alpha, gs.w0(d_both1), linewidth=lwidth, color = color4, zorder = 1)
+axs.plot(alpha, gs.w0(d_both2), linewidth=lwidth, color = color5, zorder = 1)
 
-RANK_D_withHierarchy = 1-np.cumsum(AD_withHierarchy)[1:]*np.diff(m_withHierarchy)
-RANK_D_withoutHierarchy = 1-np.cumsum(AD_withoutHierarchy)[1:]*np.diff(m_withoutHierarchy)
-
-order_withHierarchy = np.sort(dataView_nu_withHierarchy[:, 9:], axis = 1)
-order_withoutHierarchy = np.sort(dataView_nu_withoutHierarchy[:, 9:], axis = 1)
-
+axs.set_ylim(0, 1.02)
 alpha = np.linspace(0, 1, 500)
+for name, c, m in [("nu0rho1", color1, "d"), ("nu0rho3",color2, "s"), ("nu3rho1", color3, "o"), ("nu3rho0.33", color4, "v"), ("nu3rho3", color5, "^")]:
+    data_nu = np.genfromtxt(dir + "nalphadistribution_" + name + ".csv", skip_header = 8, names = None, delimiter = ',')
+    dataView_nu = data_nu.view(dtype = np.float64).reshape((-1, 500 + 9))
+    if(name == "nu0rho3"):
+        axs.scatter(1-alpha[::40], (np.count_nonzero(dataView_nu[:, 9:], axis = 0)/dataView_nu.shape[0])[::40], s = msize, alpha = salpha, marker = m, color = c, zorder = 2)
+    else:
+        axs.scatter(alpha[::40], (np.count_nonzero(dataView_nu[:, 9:], axis = 0)/dataView_nu.shape[0])[::40], s = msize, alpha = salpha, marker = m, color = c, zorder = 2)
 
-axs[1].plot(RANK_D_withHierarchy, m_withHierarchy[1:], linewidth = lwidth, color = color1, zorder = 7)
-axs[1].plot(RANK_D_withoutHierarchy, m_withoutHierarchy[1:], linewidth = lwidth, color = color4, zorder = 5)
+axs.set_xlabel(r"$r(\alpha)$")
+axs.set_ylabel(r"Fraction of survivors $\phi(\alpha)$")
+axs.set_xticks([0, 0.5, 1])
+axs.set_yticks([0, 0.5, 1])
+axs.grid(True)
+axs.set_xlim(0, 1)
 
-axs[1].scatter(1-alpha[::30], np.average(order_withHierarchy, axis = 0)[::30], s = msize, alpha = salpha,
-                    marker = 'D', color = color2, zorder = 4, label=r"$M$")
-axs[1].scatter(1-alpha[::30], np.average(order_withoutHierarchy, axis = 0)[::30], s = msize, alpha = salpha, 
-                    marker = 's', color = color5, zorder = 2, label=r"$M$")
-'''
-    Panel (c)
-'''
-
-a = np.linspace(0, 1)
-
-D1 = gs.VDelta(lambda x : 1.0, a, nu, sigma, rho, u, d0, d1)
-M_h1 = gs.M_hierarchy(mu, nu, sigma, rho, u, d0, d1, D1)
-
-axs[2].plot(a, M_h1, linewidth = lwidth, color = color1, linestyle = '-', zorder = 4)
-# 1.97353473 = value of M when rho = 1, nu = 0 and the other parameters are the same
-axs[2].plot(a, np.linspace(1.97353473, 1.97353473, 50), linewidth = lwidth, color = color4, linestyle = '-', zorder = 3)
-
-
-axs[2].scatter(alpha[::30], np.average(dataView_nu_withHierarchy[:, 9:], axis = 0)[::30], s = msize, alpha = salpha, 
-                    marker = 'D', color = color2, zorder = 4, label=r"$M$")
-axs[2].scatter(alpha[::30], np.average(dataView_nu_withoutHierarchy[:, 9:], axis = 0)[::30], s = msize, alpha = salpha, 
-                    marker = 's', color = color5, zorder = 2, label=r"$M$")
-
-
-'''
-    axis titles, limits, etc
-'''
-
-axs[0].set_ylim(0, 1.5)
-axs[0].set_xlim(0.1, 3.2)
-axs[0].set_xticks([0, 1, 2, 3])
-axs[0].set_yticks([0, 0.5, 1.0, 1.5])
-axs[0].grid(True)
-axs[0].set_xlabel(r"Abundance")
-axs[0].set_ylabel(r"Frequency")
-
-
-axs[1].set_xlim(-0.02, 1.02)
-axs[1].grid(True)
-axs[1].set_ylim(0.1, 3.0)
-axs[1].set_yscale("log")
-axs[1].set_xlabel(r"Rank")
-axs[1].set_ylabel(r"Abundance")
-
-
-axs[2].set_xlim(-0.02, 1.02)
-axs[2].grid(True)
-axs[2].set_xlabel(r"$r(\alpha)$")
-axs[2].set_ylabel(r"Abundance $M(\alpha)$")
-axs[2].set_ylim(0.1, 3.0)
-axs[2].set_yscale("log")
-
-
-axs[0].annotate(r'\textbf{(a)}', xy=(0.05, 0.05), xycoords='axes fraction', zorder = 10, bbox=dict(facecolor='white', alpha=1.0, boxstyle='round', pad = 0.15))
-axs[1].annotate(r'\textbf{(b)}', xy=(0.05, 0.05), xycoords='axes fraction')
-axs[2].annotate(r'\textbf{(c)}', xy=(0.05, 0.05), xycoords='axes fraction')
-
-# plt.savefig("Abundance Distribution2.pdf")
+# plt.savefig("Fig. 5: Survival Probabilities.pdf")

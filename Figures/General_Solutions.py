@@ -261,7 +261,18 @@ def Delta(n, alpha, nu, sigma, rho, u, D0, D1):
 
     return opt.fsolve(func, [np.minimum(D0, D1)])
 
-# M(Delta)
+def vDelta(alpha, nu, sigma, rho, u, d0, d1):
+    rootData = np.zeros(np.size(alpha))
+    root = d0
+
+    def func(alpha, x):
+        return integrate.quad(lambda x : 1, 0, alpha)[0] - int_1(nu, sigma, rho, u, d0, x)
+
+    for a in range(np.size(alpha)):
+        root = opt.fsolve(lambda x : func(alpha[a], x), root)
+        rootData[a] = root
+
+    return rootData
 
 
 def M_hierarchy(mu, nu, sigma, rho, u, D0, D1, D_alpha):

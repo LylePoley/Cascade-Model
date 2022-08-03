@@ -1,187 +1,162 @@
 '''
-    Fig. 2 in the main text
+    Fig 2. in the main text
 '''
-import matplotlib.pyplot as plt
+
+# general marker and other settings
 import numpy as np
+import matplotlib.pyplot as plt
 import General_Solutions as gs
 
-dir = "/home_th/poley/Cascade_model_code_final/PythonFinal/Fig. 2, phase plots rho-nu plane/"
+# set this to whatever folder the Fig.1 data is in
+dir = gs.dir + "/Fig. 1, M and phi against nu data/"
 
-f = 2
-fig, axs = plt.subplots(1, 3, figsize=(18*f, 5*f))
+lwidth = 8
+msize = 800
+malpha = 0.6
+pathlen = 1000
 
 plt.rc('text', usetex=True)
 plt.rcParams.update({'font.size': 40})
-N = 4
-# plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.CMRmap(np.linspace(0,1,N)))
-plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.viridis(np.linspace(0,1,N)))
+fig, axs = plt.subplots(1, 2, figsize=(32,12))
 
-color1 = next(plt.gca()._get_lines.prop_cycler)['color']
-color2 = next(plt.gca()._get_lines.prop_cycler)['color']
-color3 = next(plt.gca()._get_lines.prop_cycler)['color']
-color4 = next(plt.gca()._get_lines.prop_cycler)['color']
-color5 = next(plt.gca()._get_lines.prop_cycler)['color']
 
-# mu = 0.5 or -0.5
-# sigma = 0.8 or 0.7
-# gamma = 0.8
+nu = 5.0
+sigma = 0.3
+rho = 1.5
+mu = 0.958
 
-# general marker and other settings
-lwidth = 3
-msize = 800
-malpha = 0.6
-salpha = 1
+gamma1 = -1
+gamma2 = 1
+gamma3 = 0
+
+'''
+    theory for left plot
+'''
+'''
+    paths1, 2, 3, 4 each contain three columns, the first
+    is G = sigma**2 (rho**2 - 1/rho**2)/(4 * nu * u)
+    the second and third are \Delta_0 and \Delta_1 respectively.
+'''
+theoryData1 = np.genfromtxt(dir + "path3.csv") # gamma = -1
+theoryData2 = np.genfromtxt(dir + "path4.csv")
+theoryData3 = np.genfromtxt(dir + "path2.csv")
+
+nu1 = gs.make_path([0.01, nu], [sigma, sigma], [rho, rho], [gamma1, gamma1], pathlen+500)[0]
+nu2 = gs.make_path([0.01, nu], [sigma, sigma], [rho, rho], [gamma2, gamma2], pathlen+200)[0]
+nu3 = gs.make_path([0.01, nu], [sigma, sigma], [rho, rho], [gamma3, gamma3], pathlen+600)[0]
+
+M1 = gs.avgM(mu, nu1[::4], rho, theoryData1[::4, 1], theoryData1[::4, 2])
+skip = 100
+M2 = gs.avgM(mu, nu2[skip:], rho, theoryData2[skip:, 1], theoryData2[skip:, 2])
+M3 = gs.avgM(mu, nu3[:], rho, theoryData3[:, 1], theoryData3[:, 2])
+
+axs[0].plot(nu1[::4], M1, c = "darkblue", linewidth = lwidth)
+axs[0].plot(nu2[skip:], M2, c = "darkred", linewidth = lwidth)
+axs[0].vlines(0.4, 0, 100, colors = 'darkred', alpha = 0.8, linestyles = 'dashed', linewidth = 1.5)
+axs[0].plot(nu3[:], M3, c = "darkgreen", linewidth = lwidth)
+
+'''
+    data for left plot
+'''
+
+simData1 = np.genfromtxt(dir + "M_to_infinity_gam-1.csv", names = None, skip_header = 7, comments = "#", delimiter = ",").reshape(-1, 40, 259)
+simData2 = np.genfromtxt(dir + "M_to_infinity.csv", names = None, skip_header = 7, comments = "#", delimiter = ",").reshape(-1, 40, 259)
+simData3 = np.genfromtxt(dir + "M_to_infinity_gam-0.csv", names = None, skip_header = 7, comments = "#", delimiter = ",").reshape(-1, 40, 259)
+
+avgSimData1 = np.average(simData1, axis = 1)
+avgSimData2 = np.average(simData2, axis = 1)
+avgSimData3 = np.average(simData3, axis = 1)
+
+nu1_data = avgSimData1[:, 1]
+nu2_data = avgSimData2[:, 1]
+nu3_data = avgSimData3[:, 1]
+
+mu1_data = avgSimData1[:, 0]
+mu2_data = avgSimData2[:, 0]
+mu3_data = avgSimData3[:, 0]
+
+M1 = np.average(avgSimData1[:, 9:], axis = 1)
+M2 = np.average(avgSimData2[:, 9:], axis = 1)
+M3 = np.average(avgSimData3[:, 9:], axis = 1)
+
+
+axs[0].scatter(nu1_data, M1, marker = "s", c = "darkblue", s = msize, zorder=3, alpha = malpha, label = r"$\gamma = -1$")
+axs[0].scatter(nu2_data, M2, marker = "D", c="darkred", s = msize, zorder=3, alpha = malpha, label = r"$\gamma = 1$")
+axs[0].scatter(nu3_data, M3, marker = "o", c = "darkgreen", s = msize, zorder=3, alpha = malpha, label = r"$\gamma = 0$")
+
 
 
 '''
-    Panel (a)
+    theory for right plot
 '''
 
-# middle plot, the one bucket stability plot in the sigma, mu plane
-def _mu(gamma, D):
-    return D*gs.w2(D)/(gs.w1(D)*(gs.w2(D) + gamma*gs.w0(D)))
+# small bits of jibbery, avoiding using the limiting form for the survival rate when gamma = 0 by using gamma = 0.01
+# the real deal is indistinguishable
+gamma3 += 0.01
+theoryData3 = np.genfromtxt(dir + "path1.csv")
+nu3 = gs.make_path([0.01, nu], [sigma, sigma], [rho, rho], [gamma3, gamma3], pathlen + 400)[0]
 
-def _sigma(gamma, D):
-    return np.sqrt(gs.w2(D))/(gs.w2(D) + gamma*gs.w0(D))
+G1 = theoryData1[:, 0]
+u1 = sigma**2*(rho**2 - 1/rho**2)/(4*nu1*G1)
+phi1 = u1*(1-u1)/(gamma1*sigma**2)
 
-D = np.concatenate((np.linspace(-1.0, 4.0, 200), np.linspace(4.01, 1000, 500)), axis = None)
+G2 = theoryData2[:, 0]
+u2 = sigma**2*(rho**2 - 1/rho**2)/(4*nu2*G2)
+phi2 = u2*(1-u2)/(gamma2*sigma**2)
 
-# minfty line
-minfty_mu = _mu(0.8, D)
-minfty_sig = _sigma(0.8, D)
-opper_sig = np.full(700,np.sqrt(2)/1.8)
+G3 = theoryData3[:, 0]
+u3 = sigma**2*(rho**2 - 1/rho**2)/(4*nu3*G3)
+phi3 = u3*(1-u3)/(gamma3*sigma**2)
 
-# filling
-axs[0].fill_between(np.linspace(-1.1, 0, 700), np.linspace(1, 1, 700), opper_sig, color = color2, alpha = salpha)
-axs[0].fill_between(minfty_mu, np.minimum(minfty_sig, opper_sig), color = color3, alpha = salpha)
-axs[0].fill_betweenx(minfty_sig, minfty_mu, np.full(700, 2), color = color1, alpha = salpha)
-axs[0].fill_betweenx([0, 0.1], [1, 1], [2, 2], color = color1, alpha = salpha)
+axs[1].plot(nu1[(phi1>0.995) | (nu1 > 0.5)], phi1[(phi1>0.995) | (nu1 > 0.5)], label = r"$\gamma = -1$", c = "darkblue", linewidth = lwidth) 
+axs[1].plot(nu2[nu2>0.4], phi2[nu2>0.4], label = r"$\gamma = 1$", c = "darkred", linewidth = lwidth) 
+axs[1].plot(nu3, phi3, label = r"$\gamma = 0$", c = "darkgreen", linewidth = lwidth)
 
-axs[0].set_xlim(-1.1, 1.1)
-axs[0].set_ylim(0, 1.0)
-axs[0].vlines(0, 0, 1.5)
-axs[0].set_xlabel(r"$\mu$")
-axs[0].set_ylabel(r"$\sigma$")
+axs[1].vlines(0.4, 0, 0.996, colors = 'darkred', alpha = 0.8, linestyles = 'dashed', linewidth = 1.5)
 
 '''
-    Panel (b)
+    simulated data for right plot
 '''
 
-# bottom right, opper lines in the rho nu plane
+phi1 = np.count_nonzero(simData1[:, :, 9:], axis = (1, 2))/(np.count_nonzero(simData1[:, :, 5] != 0, axis = 1)*250)
+phi2 = np.count_nonzero(simData2[:, :, 9:], axis = (1, 2))/(np.count_nonzero(simData2[:, :, 5] != 0, axis = 1)*250)
+phi3 = np.count_nonzero(simData3[:, :, 9:], axis = (1, 2))/(np.count_nonzero(simData3[:, :, 5] != 0, axis = 1)*250)
 
-opper_b = np.genfromtxt(dir + "u_General_Solutions_Opper_Line_sig0.7.csv")
-minfty_b = np.genfromtxt(dir + "test2.csv")
+nu1_data = np.average(simData1, axis = 1)[:, 1]
+nu2_data = np.average(simData2, axis = 1)[:, 1]
+nu3_data = np.average(simData3, axis = 1)[:, 1]
 
-# reverse to the axes can be aligned
-opper_rho = opper_b[:, 0][::-1]
-# interpolate so that the two curves have the same x coords, filling between two curves doesnt work without this
-minfty_rho = np.concatenate((np.interp(np.linspace(-5, 1, 600), np.linspace(-5, 1, 500), minfty_b[:, 0]), np.full(400, 20)))
-
-mask = (opper_rho <= minfty_rho)
-axs[1].plot(np.linspace(-5, 5, 1000)[mask], opper_rho[mask], linewidth = lwidth, color = color2)
-axs[1].plot(-np.linspace(-5, 5, 1000)[mask], 1/opper_rho[mask], linewidth = lwidth, color = color2)
-
-
-axs[1].plot(np.linspace(-5, 5, 1000), minfty_rho, color = color1, linewidth = lwidth)
-axs[1].plot(-np.linspace(-5, 5, 1000), 1/minfty_rho, color = color1, linewidth = lwidth)
-
-# filling for different stability regions
-# stable
-axs[1].fill_between(np.linspace(-5, 5, 1000), np.minimum(minfty_rho, opper_rho), 
-                                                1/np.minimum(minfty_rho, opper_rho)[::-1], color = color3, alpha = salpha)
-
-# metastable
-# # above
-axs[1].fill_between(np.linspace(-5, 5, 1000), opper_rho, minfty_rho, where = minfty_rho >= opper_rho, color = color2, alpha = salpha)
-# # below
-axs[1].fill_between(-np.linspace(-5, 5, 1000), 1/opper_rho, 1/minfty_rho, where = minfty_rho >= opper_rho, color = color2, alpha = salpha)
-
-# divergence
-axs[1].fill_between(np.linspace(-5, 5, 1000), minfty_rho, np.full(1000, 20), color = color1, alpha = salpha)
-axs[1].fill_between(-np.linspace(-5, 5, 1000), 1/minfty_rho, 1/np.full(1000, 20), color = color1, alpha = salpha)
-
-
-# other settings 
-axs[1].set_yscale("log")
-axs[1].set_xlim(-5, 5)
-axs[1].set_ylim(1/11, 11)
-axs[1].hlines(1, -5, 5, zorder = 5)
-axs[1].vlines(0, 0, 11, zorder = 5)
+axs[1].scatter(nu1_data, phi1, c = "darkblue", alpha = malpha, s = msize, marker = "s", zorder = 3)
+axs[1].scatter(nu2_data, phi2, c = "darkred", alpha = malpha, marker = "D", s = msize, zorder = 3)
+axs[1].scatter(nu3_data, phi3, c = "darkgreen", alpha = malpha, s = msize, zorder = 3)
 
 '''
-    Panel (c)
+    options for the first plot
 '''
 
-# Bottom left, Minfty lines in the rho nu plane
-minfty_c = np.genfromtxt(dir + "u_General_Solutions_Minfty.csv")
-opper_c = np.genfromtxt(dir + "u_General_Solutions_Opper_Line_Other_Bit.csv")
+axs[0].legend(prop={'size': 32})
+axs[0].set_xlim(0, 1.05)
+axs[0].set_yscale("log")
+axs[0].set_ylim(1, 100.0)
+axs[0].grid("true")
 
-
-minfty_nu = minfty_c[::-1, 0]
-# interpolate so that the two curves have the same y coords, filling between two curves doesnt work without this
-opper_nu = np.concatenate((np.interp(np.linspace(0.01, 5.156, 454), np.linspace(0.01, 5.155994326976409248e+00, 1200), opper_c[::-1, 0]), np.full(546, 10)))
-
-
-axs[2].plot(minfty_nu, np.linspace(0.01, 11, 1000), color = color1, linewidth = lwidth)
-axs[2].plot(-minfty_nu, 1/np.linspace(0.01, 11, 1000), color = color1, linewidth = lwidth)
-
-
-# # filling for different stability regions
-# stable
-axs[2].fill_betweenx(np.linspace(0.01, 11, 1000), np.maximum(minfty_nu, opper_nu), np.full(1000, 6), alpha = salpha, color = color3)
-axs[2].fill_betweenx(1/np.linspace(0.01, 11, 1000), np.minimum(-minfty_nu, -opper_nu), np.full(1000, -6), alpha = salpha, color = color3)
-
-# metastable
-axs[2].fill_betweenx(np.linspace(0.01, 11, 1000), minfty_nu, opper_nu, where=opper_nu >= minfty_nu, alpha = salpha, color = color2)
-axs[2].fill_betweenx(1/np.linspace(0.01, 11, 1000), -minfty_nu, -opper_nu, where = opper_nu >= minfty_nu, alpha = salpha, color = color2)
-
-# divergence
-axs[2].fill_betweenx(np.linspace(0.01, 11, 1000), minfty_nu, 
-                                                0, color = color1, alpha = salpha)
-axs[2].fill_betweenx(1/np.linspace(0.01, 11, 1000), -minfty_nu, 
-                                                0, color = color1, alpha = salpha)
-
-axs[2].set_yscale("log")
-axs[2].set_xlim(-5, 5)
-axs[2].set_ylim(1/11, 11)
-axs[2].hlines(1, -5, 5, zorder = 5)
-axs[2].vlines(0, 0, 11, zorder = 5)
-
+axs[0].set_ylabel(r'Average Abundance $[\![ M ]\!]$')
+axs[0].set_xlabel(r'$\nu$')
 
 '''
-    Other settings
+    plot settings for right plot
 '''
-# points where the neighbouring plots are from
-# [mu, sig] = [-0.5, 0.7], [0.5, 0.8]
-axs[0].scatter([-0.5], [0.7], color = "yellow", s = 1000, edgecolor = 'black', linewidth = 5, zorder = 10)
-axs[0].scatter([0.5], [0.8], color = "red", s = 1000, edgecolor = 'black', linewidth = 5, zorder = 10)
-axs[1].scatter([0.0], [1.0], color = "yellow", s = 1000, edgecolor = 'black', linewidth = 5, zorder = 10)
-axs[2].scatter([0.0], [1.0], color = "red", s = 1000, edgecolor = 'black', linewidth = 5, zorder = 10)
 
-# labels and ticks
-axs[0].set_xticks([-1, 0, 1])
-axs[0].set_yticks([0.0, 0.5, 1.0])
+axs[1].set_xlim(0, 1.05)
+axs[1].set_ylim(0.979, 1)
+axs[1].set_yticks([0.98, 0.99, 1.00])
+axs[1].grid("true")
 
-axs[1].set_xticks([-5, 0, 5])
-axs[1].set_yticks([0.1, 1, 10])
-axs[1].set_xlabel(r"$\nu$")
-axs[1].set_ylabel(r"$\rho$")
 
-axs[2].set_xticks([-5, 0, 5])
-axs[2].set_yticks([0.1, 1, 10])
-axs[2].set_xlabel(r"$\nu$")
-axs[2].set_ylabel(r"$\rho$")
+axs[1].set_ylabel(r'Fraction of Survivors $[\![ \phi ]\!]$')
+axs[1].set_xlabel(r'$\nu$')
 
-# labels for different stability regions
-axs[1].text(-4, 4.5, r"Diverging\\Abundances", size=35,bbox=dict(facecolor='white', alpha=0.65, boxstyle="round", pad = 0.4))
-axs[1].text(0.6, 6.0, r"Linearly\\Unstable",size=35, bbox=dict(facecolor='white', alpha=0.65, boxstyle="round", pad = 0.4))
-axs[1].text(2.5, 2, r"Stable",size=35, bbox=dict(facecolor='white', alpha=0.65, boxstyle="round"))
-
-# panel labels
-axs[0].text(0.08, 0.06, r'\textbf{(a)}', horizontalalignment='center', verticalalignment='center', transform = axs[0].transAxes)
-axs[1].text(0.08, 0.06, r'\textbf{(b)}', horizontalalignment='center', verticalalignment='center', transform = axs[1].transAxes)
-axs[2].text(0.08, 0.06, r'\textbf{(c)}', horizontalalignment='center', verticalalignment='center', transform = axs[2].transAxes)
-
-plt.savefig(dir + "rho-nu plane phase plots.png")
-
-# plt.show()
+axs[0].text(0.05, 0.08, '(a)', horizontalalignment='center', verticalalignment='center', transform = axs[0].transAxes)
+axs[1].text(0.05, 0.08, '(b)', horizontalalignment='center', verticalalignment='center', transform = axs[1].transAxes)
+fig.tight_layout()
+plt.savefig("Fig. 1: theory working demonstration.pdf")

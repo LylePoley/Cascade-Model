@@ -1,5 +1,5 @@
 '''
-    Proof that the equations for instability work
+    Fig S1. Proof that the equations for instability work
 '''
 
 import numpy as np

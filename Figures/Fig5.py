@@ -1,33 +1,19 @@
-import General_Solutions as gs
-import numpy as np
+'''
+    Fig. 5
+'''
 import matplotlib.pyplot as plt
-import scipy.optimize as opt
-import scipy.integrate as integrate
+import numpy as np
+import General_Solutions as gs
 
-dir = gs.dir + "/Fig. 5, survival distributions/"
+dir = gs.dir + "/Fig. 3, phase plots sig-gamma and mu-gamma planes/"
 
-def vDelta(alpha, nu, sigma, rho, u, d0, d1):
-    rootData = np.zeros(np.size(alpha))
-    root = d0
-
-    def func(alpha, x):
-        return integrate.quad(lambda x : 1, 0, alpha)[0] - gs.int_1(nu, sigma, rho, u, d0, x)
-
-    for a in range(np.size(alpha)):
-        root = opt.fsolve(lambda x : func(alpha[a], x), root)
-        rootData[a] = root
-
-    return rootData
-
-
-# Plot settings
 f = 1
-fig, axs = plt.subplots(1, 1, figsize=(6*f, 5*f))
+fig, axs = plt.subplots(1, 2, figsize=(12*f, 5*f))
 
 plt.rc('text', usetex=True)
-plt.rcParams.update({'font.size': 16})
-N = 5
-
+plt.rcParams.update({'font.size': 20})
+N = 4
+# plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.CMRmap(np.linspace(0,1,N)))
 plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.viridis(np.linspace(0,1,N)))
 
 color1 = next(plt.gca()._get_lines.prop_cycler)['color']
@@ -35,66 +21,117 @@ color2 = next(plt.gca()._get_lines.prop_cycler)['color']
 color3 = next(plt.gca()._get_lines.prop_cycler)['color']
 color4 = next(plt.gca()._get_lines.prop_cycler)['color']
 color5 = next(plt.gca()._get_lines.prop_cycler)['color']
-color6 = next(plt.gca()._get_lines.prop_cycler)['color']
-color7 = next(plt.gca()._get_lines.prop_cycler)['color']
-color8 = next(plt.gca()._get_lines.prop_cycler)['color']
+
 
 # general marker and other settings
-lwidth = 3.5
-msize = 80
-malpha = 0.8
-salpha = 0.7
+lwidth = 3
+msize = 800
+malpha = 0.6
+salpha = 1
 
-# start point
-u, d0, d1 = [1.05134272, 3.32516367, 3.39267796]
+# p = proportion of predator prey pairs
+p = np.linspace(0, 1, 200)
+gamma = np.cos(np.pi*p)
 
-# mu = -1.0
-nu = 0.0
-sigma = 0.3
-rho = 0.99
-gamma = -0.6
-alpha = np.linspace(0, 1, 50)
+'''
+    Panel (a)
+'''
 
-sigma2 = 0.75
-nu2 = 3.0
-rho2 = 3.0
+sig_rho1 = np.genfromtxt(dir + "sig-gamPlaneOppernu = 3.csv")
+sig_rho1_plus = np.genfromtxt(dir + "sig-gamPlaneOppernu = 4.csv")
+sig_nu1 = np.genfromtxt(dir + "sig-gamPlaneOpperrho = 3.csv")
+sig_nu1_plus = np.genfromtxt(dir + "sig-gamPlaneOpperrho = 4.csv")
 
-rho3 = 1/3.0
+for idx in range(10):
+    axs[0].arrow(p[20*idx+10], sig_rho1[20*idx+10]-0.08, 0, sig_rho1_plus[20*idx+10]-sig_rho1[20*idx+10], width = 0.008, color=color2)
+    if idx < 6:
+        axs[0].arrow(p[20*idx+10], sig_nu1[20*idx+10]+0.1, 0, sig_nu1_plus[20*idx+10]-sig_nu1[20*idx+10], width = 0.008, color=color3)
+    if idx == 6:
+        axs[0].arrow(p[20*idx+5], sig_nu1[20*idx+5]+0.15, 0, sig_nu1_plus[20*idx+5]-sig_nu1[20*idx+5], width = 0.008, color=color3)
 
-data = np.genfromtxt(dir + "SurvivalDistributions.csv", skip_header = 1)
+sig = np.sqrt(2)/(1 + gamma)
 
-u = data[:, 0]
-d0 = data[:, 1]
-d1 = data[:, 2]
+axs[0].plot(p, sig_rho1, linewidth = lwidth, color = "black", linestyle="-", label=r"$\rho=4$")
+axs[0].plot(p, sig_nu1, linewidth = lwidth, color = "black", linestyle="-", label=r"$\nu=4$")
 
-d_ob = vDelta(alpha, nu, sigma2, rho, u[0], d0[0], d1[0])
-d_rho = vDelta(alpha, nu, sigma2, rho3, u[1], d0[1], d1[1])
-d_nu = vDelta(alpha, nu2, sigma2, rho, u[2], d0[2], d1[2])
-d_both1 = vDelta(alpha, nu2, sigma2, rho3, u[3], d0[3], d1[3])
-d_both2 = vDelta(alpha, nu2, sigma2, rho2, u[4], d0[4], d1[4])
+axs[0].plot(p, sig, linewidth = lwidth, color = "black", label=r"$\rho=1, \nu=0$")
+
+axs[0].set_xlabel(r"Proportion of PP Interactions")
+axs[0].set_ylabel(r"$\sigma$")
+axs[0].set_xticks([0.0, 1.0])
+axs[0].set_yticks([0,3])
+axs[0].set_ylim(0, 3)
+axs[0].set_xlim(0, 1)
 
 
-axs.plot(alpha, gs.w0(d_ob), linewidth=lwidth, color = color1, zorder = 5)
-axs.plot(alpha, gs.w0(d_rho), linewidth=lwidth, color = color2, zorder = 4)
-axs.plot(alpha, gs.w0(d_nu), linewidth=lwidth, color = color3, zorder = 4)
-axs.plot(alpha, gs.w0(d_both1), linewidth=lwidth, color = color4, zorder = 1)
-axs.plot(alpha, gs.w0(d_both2), linewidth=lwidth, color = color5, zorder = 1)
+axs[0].fill_between(p, sig, color = color3)
+axs[0].fill_between(p, sig, np.linspace(9, 9, 200), color = color2)
+axs[0].fill_between(p[180:], np.linspace(9, 9, 20), color = color3)
 
-axs.set_ylim(0, 1.02)
-alpha = np.linspace(0, 1, 500)
-for name, c, m in [("nu0rho1", color1, "d"), ("nu0rho3",color2, "s"), ("nu3rho1", color3, "o"), ("nu3rho0.33", color4, "v"), ("nu3rho3", color5, "^")]:
-    data_nu = np.genfromtxt(dir + "nalphadistribution_" + name + ".csv", skip_header = 8, names = None, delimiter = ',')
-    dataView_nu = data_nu.view(dtype = np.float64).reshape((-1, 500 + 9))
-    if(name == "nu0rho3"):
-        axs.scatter(1-alpha[::40], (np.count_nonzero(dataView_nu[:, 9:], axis = 0)/dataView_nu.shape[0])[::40], s = msize, alpha = salpha, marker = m, color = c, zorder = 2)
-    else:
-        axs.scatter(alpha[::40], (np.count_nonzero(dataView_nu[:, 9:], axis = 0)/dataView_nu.shape[0])[::40], s = msize, alpha = salpha, marker = m, color = c, zorder = 2)
 
-axs.set_xlabel(r"$r(\alpha)$")
-axs.set_ylabel(r"Survival rate $\phi(\alpha)$")
-axs.set_xticks([0, 0.5, 1])
-axs.set_yticks([0, 0.5, 1])
-axs.grid(True)
-axs.set_xlim(0, 1)
+axs[0].text(p[160]-0.16, sig_rho1[160]-1.1, r"Increasing $\rho$",bbox=dict(facecolor='white', alpha=0.65))
+axs[0].text(p[5]+0.02, sig_nu1_plus[5]+0.6, r"Increasing $\nu$",bbox=dict(facecolor='white', alpha=0.65))
 
-# plt.savefig("Fig. 5: Survival Probabilities.pdf")
+'''
+    Panel (b)
+'''
+
+mu_p = np.genfromtxt(dir + "mu-gamplaneMinftynu=0rho=1.csv")
+mu_p_nu3 = np.genfromtxt(dir + "mu-gamplaneMinftynu=3rho=1.csv")
+mu_p_nu4 = np.genfromtxt(dir + "mu-gamplaneMinftynu=4rho=1.csv")
+mu_p_rho3 = np.genfromtxt(dir + "mu-gamplaneMinftynu=0rho=3.csv")
+mu_p_rho4 = np.genfromtxt(dir + "mu-gamplaneMinftynu=0rho=4.csv")
+
+def mu_from_data(data, nu, rho):
+    return (data[:, 2]*rho**2 + data[:, 1])/(data[:, 2]*rho**2 - data[:, 1])*nu
+
+# setting nu = 0.05 and rho = 1.02 rather than nu = 0 and rho = 1
+mu_p = mu_from_data(mu_p, 0.05, 1.02)
+mu_p_nu3 = mu_from_data(mu_p_nu3, 3.00, 1.02)
+mu_p_nu4 = mu_from_data(mu_p_nu4, 4.00, 1.02)
+mu_p_rho3 = mu_from_data(mu_p_rho3, 0.05, 3.00)
+mu_p_rho4 = mu_from_data(mu_p_rho4, 0.05, 4.00)
+
+axs[1].plot(p[::-1], mu_p, linewidth = lwidth, color = "black", linestyle="-")
+axs[1].plot(p[::-1], mu_p_nu3, linewidth = lwidth, color = "black", linestyle="-")
+axs[1].plot(p[::-1], mu_p_rho3, linewidth = lwidth, color = "black", linestyle="-")
+
+plt.fill_between(p[::-1], np.linspace(-9, -9, 200), mu_p, color = color3)
+plt.fill_between(p[::-1], mu_p, np.linspace(9, 9, 200), color = color1, alpha = 0.85)
+
+
+
+for idx in range(10):
+    axs[1].arrow(p[::-1][20*idx+10], mu_p_nu3[20*idx+10]+0.16, 0, mu_p_nu4[20*idx+10]-mu_p_nu3[20*idx+10], width = 0.008, color=color3, head_length = 2*4.5*0.008)
+    if idx < 8:
+        axs[1].arrow(p[::-1][20*idx+10], mu_p_rho3[20*idx+10]-0.1, 0, mu_p_rho4[20*idx+10]-mu_p_rho3[20*idx+10], width = 0.008, color=color1, head_length = 2*4.5*0.008)
+    if idx == 8:
+        axs[1].arrow(p[::-1][20*idx+10], mu_p_rho3[20*idx+10]-0.1, 0, mu_p_rho4[20*idx+10]-mu_p_rho3[20*idx+10], width = 0.008, color=color3, head_length = 2*4.5*0.008)
+    if idx == 9:
+        axs[1].arrow(p[::-1][20*idx+10], mu_p_rho3[20*idx+10]+0.1, 0, mu_p_rho4[20*idx+10]-mu_p_rho3[20*idx+10], width = 0.008, color=color3, head_length = 2*4.5*0.008)
+
+
+axs[1].set_xlabel(r"Proportion of PP Interactions")
+axs[1].set_ylabel(r"$\mu$")
+axs[1].set_xticks([0.0, 1.0])
+axs[1].set_yticks([-3,0,2, 4])
+axs[1].set_ylim(-3, 4)
+axs[1].set_xlim(0, 1)
+
+
+axs[1].text(p[160]-0.15, mu_p_nu4[160]-1.6, r"Increasing $\rho$",bbox=dict(facecolor='white', alpha=0.65))
+axs[1].text(p[5]+0.02, mu_p_rho4[5]+1.8, r"Increasing $\nu$",bbox=dict(facecolor='white', alpha=0.65))
+
+axs[0].annotate('Linearly\nUnstable', xy=(0.1, 0.8), xycoords='axes fraction', ma='center',
+                bbox=dict(facecolor='white', alpha=0.4, boxstyle='round', pad = 0.2))
+axs[0].annotate('Stable', xy=(0.73, 0.8), xycoords='axes fraction', ma='center',
+                bbox=dict(facecolor='white', alpha=0.4, boxstyle='round', pad = 0.2))
+
+axs[1].annotate('Diverging Abundances', xy=(0.2, 0.92), xycoords='axes fraction', ma='center',
+                bbox=dict(facecolor='white', alpha=0.4, boxstyle='round', pad = 0.2))
+
+
+axs[0].annotate('(a)', xy=(0.05, 0.05), xycoords='axes fraction')
+axs[1].annotate('(b)', xy=(0.05, 0.05), xycoords='axes fraction')
+
+# plt.savefig("Fig. 3: PP interaction phase plots.pdf")
