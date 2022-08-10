@@ -21,7 +21,7 @@ struct DataStream
             throw std::runtime_error("Couldn't open file");
     }
 
-    void Add_Header(std::string headerType = "UL", int noOfIterations = _noOfIterations, int N = _N,
+    void Add_Header(int noOfIterations = _noOfIterations, int N = _N,
                           double tMin = _tMin, double tMax = _tMax, double dt = _dt, double maxStableAbundance = _maxStableAbundance,
                           int timeStepsKept = _timeStepsKept)
     {
@@ -31,14 +31,9 @@ struct DataStream
              << "# Number of timesteps kept = " << timeStepsKept << "\n"
              << "# N = " << N << "\n#\n";
 
-        if (headerType == "UL")
-        {
-            file << "mu_L,mu_U,sigma_L,sigma_U,gamma,convergent,fixed,unique,timedOut,";
-        }
-        else if (headerType == "munu")
-        {
-            file << "mu,nu,sigma,rho,gamma,convergent,fixed,unique,timedOut,";
-        }
+
+        file << "mu,nu,sigma,rho,gamma,convergent,fixed,unique,timedOut,";
+
         for (int i = 0; i != _N; i++)
         {
             file << "x_" << i << (i != _N - 1 ? ',' : '\n');

@@ -1,3 +1,8 @@
+/*
+    This is another example, code similar to that used to get Fig. S1 in the appendix
+    copy and paste it into main.cpp to run
+*/
+
 #include <boost/multi_array.hpp>
 
 #include <array>
@@ -38,15 +43,16 @@ int main()
     integrationTimer.Pause();
     randomFillingTimer.Pause();
 
-    // where the data goes
-    DataStream file("./simData/finaltest.csv");
-    // write out the data somewhere
-    file.Add_Header("munu");
+    // where the data goes, by default it adds data to the end of an existing file
+    DataStream file("/home/lyle/Dropbox/PhD/Code/Cascade-Model/sim/data/finaltest.csv");
+    // comment this out if you want to add data to an existing file
+    file.Add_Header();
 
     std::mt19937 generator{std::random_device{}()};
 
-    // std::uniform_real_distribution<> nuDist(-250.0, 250.0);
-    // std::uniform_real_distribution<> rhoDist(0.0, std::log(1000));
+    // these generate pairs of nu and rho, we choose them randomly so that data can be added at any time
+    std::uniform_real_distribution<> nuDist(-5.0, 5.0);
+    std::uniform_real_distribution<> rhoDist(std::log(0.1), std::log(10));
 
     ThreadList<CommunityMatrix> alpha;
     ThreadList<BasicState::timeSlice> IC; // initial condition
@@ -56,19 +62,25 @@ int main()
     // average of the randomised states
     BasicState xAvg;
 
-    // set the model parameters here
-    double mu = -1.0, nu = 0.0, sigma = 1.0, rho = 1.0, gamma = -1.0;
+    // set the model parameters here, nu and rho are randomised
+    double mu = 0.5, nu = nuDist(generator), 
+            sigma = 0.8, rho = std::exp(rhoDist(generator)), gamma = 0.8;
     /*
         outer loop can be used to change model parameters,
         inner loop generates interaciton matrices, runs the dynamics and averages the results
     */
-    for (int count = 0; count != 1; count += 1)
+    for (int count = 0; count != 100; count += 1)
     {
         // iterate parameters to be changed, eg
-        nu += 0.1;
+        nu = nuDist(generator);
+        rho = std::exp(rhoDist(generator));
+
+
         // change parameters so they can be fed into the functions below
-        double mu_L = mu + nu, mu_U = mu - nu,
-               sigma_L = sigma * rho, sigma_U = sigma / rho;
+        double  mu_L = mu + nu, 
+                mu_U = mu - nu,
+                sigma_L = sigma * rho, 
+                sigma_U = sigma / rho;
 
         // read out parameters if they change
         std::cout << "count = " << count << ", mu = " << mu << ", nu = " << nu << ", sigma = " << sigma << ", rho = " << rho << ", gamma = " << gamma << '\n';
@@ -103,7 +115,7 @@ int main()
             randomFillingTimer.Play();
             for (int i = 0; i != _noOfThreads; i++)
             {
-                threads[i] = std::thread(Generate_Quenched_Disorder, std::ref(alpha[i]), std::ref(IC[i]));
+                threads[i] = std::thread(Generate_Quenched_Disorder, std::ref(alpha[0]), std::ref(IC[i]));
             }
             for (auto &&t : threads)
             {
@@ -114,7 +126,7 @@ int main()
             integrationTimer.Play();
             for (int i = 0; i != _noOfThreads; i++)
             {
-                threads[i] = std::thread(Integrate_Dynamics, std::ref(alpha[i]), std::ref(IC[i]), std::ref(x[i]));
+                threads[i] = std::thread(Integrate_Dynamics, std::ref(alpha[0]), std::ref(IC[i]), std::ref(x[i]));
             }
             for (auto &&t : threads)
             {
@@ -123,23 +135,45 @@ int main()
             integrationTimer.Pause();
 
 
+            // if all three are true then the data gets processed
+            int unique = 0;
+            int convergent = 0;
+            int fixedPoint = 0;
+            int timedOut = 0;
+
+            // first check they all converge to a fixed point
+            // non-convergent and non fixed point solutions dont get integrated fully
+            // so these solutions have no valid data
             for (auto &&state : x)
             {
-                file << mu << ',' << nu << ',' << sigma << ',' << rho << ',' << gamma << ','
-                     << (int)state.convergent << ',' << (int)state.fixedPoint << ',' << 1.0 << ',' << (int)state.timedOut << ',';
+                convergent += (int)state.convergent;
+                fixedPoint += (int)state.fixedPoint;
+                timedOut += (int)state.timedOut;
+            }
 
-                // if everything works then read the data out
-                if (state.convergent)
+            // if theres data to look at, check that each abundance (x[thread][i]) ends up within 0.001 of the other three
+            for (int i = 0; i != _N; i++)
+            {
+                for (int thread = 0; thread != _noOfThreads - 1; thread++)
                 {
-                    file << state << '\n';
+                    unique += (int)(std::abs(x[thread][i] - x[thread + 1][i]) < std::abs(1e-10 + x[thread][i]*0.001));
                 }
-                else
-                {
-                    for (int i = 0; i != _N; i++)
-                    {
-                        file << 0.0 << (i != _N - 1 ? ',' : '\n');
-                    }
-                }
+            }
+
+            // read out parameter and stability information
+            file << mu << ',' << nu << ',' << sigma << ',' << rho << ',' << gamma << ','
+                 << double(convergent)/_noOfThreads << ',' << double(fixedPoint)/_noOfThreads << ','
+                 << double(unique)/((_noOfThreads - 1)*_N) << ',' << double(timedOut)/_noOfThreads << ',';
+
+            // read out the abundances of each species
+            for (int i = 0; i != _N; i++)
+            {
+                x[0][i] = (x[0][i] + x[1][i] + x[2][i] + x[3][i]) / 4.0;
+            }
+            file << x[0] << '\n';
+
+            for (auto &&state : x)
+            {
                 state.Reset();
             }
 

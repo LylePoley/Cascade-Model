@@ -32,7 +32,7 @@ constexpr int _B = 2;
     You can set _noOfThreads = 1 and nothing bad will happen if you don't want to do multithreading.
 */
 constexpr int _noOfThreads = 4;
-constexpr int _iterationLoops = 100;
+constexpr int _iterationLoops = 5;
 constexpr int _noOfIterations = _iterationLoops * _noOfThreads;
 
 // concurrent processes are helled in a threadList
@@ -45,7 +45,7 @@ using ThreadList = std::array<T, _noOfThreads>;
 */
 constexpr double _dt = 0.1;
 constexpr double _tMin = 0.0;
-constexpr double _tMax = 1500.0;
+constexpr double _tMax = 750.0;
 constexpr int _timeStepsKept = 50;
 
 /*
